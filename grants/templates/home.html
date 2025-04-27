@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grant Checker Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function submitForm() {
+            const url = document.getElementById('url-input').value;
+            const statusResult = document.getElementById('status-result');
+            
+          
+            statusResult.innerHTML = "Checking...";
+            
+  
+            if (!url) {
+                statusResult.innerHTML = "<p class='text-2xl font-bold text-gray-600'>⚠️ Please enter a URL.</p>";
+                return;
+            }
+        
+            fetch('/check-url-ajax/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'open') {
+                    statusResult.innerHTML = `<p class="text-2xl font-bold text-green-600">✅ Open</p>`;
+                    updateTable(url, 'open');
+                } else if (data.status === 'closed') {
+                    statusResult.innerHTML = `<p class="text-2xl font-bold text-red-600">❌ Closed</p>`;
+                    updateTable(url, 'closed');
+                } else if (data.status === 'error') {
+                    statusResult.innerHTML = `<p class="text-2xl font-bold text-gray-600">⚠️ Error: ${data.error}</p>`;
+                } else {
+                    statusResult.innerHTML = `<p class="text-2xl font-bold text-gray-600">⚠️ Unexpected status returned.</p>`;
+                }
+            })
+            .catch(error => {
+                statusResult.innerHTML = `<p class="text-2xl font-bold text-gray-600">⚠️ Error contacting server</p>`;
+            });
+        }
+        
+        function updateTable(url, status) {
+            const tableBody = document.querySelector('table tbody');
+        
+          
+            const newRow = document.createElement('tr');
+            newRow.classList.add('border-t');
+        
+            const urlCell = document.createElement('td');
+            urlCell.classList.add('px-4', 'py-2', 'break-words');
+            urlCell.textContent = url;
+        
+            const statusCell = document.createElement('td');
+            statusCell.classList.add('px-4', 'py-2', 'font-bold');
+            statusCell.classList.add(status === 'open' ? 'text-green-600' : 'text-red-600');
+            statusCell.textContent = status === 'open' ? '✅ Open' : '❌ Closed';
+        
+            newRow.appendChild(urlCell);
+            newRow.appendChild(statusCell);
+            tableBody.appendChild(newRow);
+        }
+        
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+
+    <h1 class="text-4xl font-bold text-center text-blue-700 mb-8">Grant Status Dashboard</h1>
+
+    <div class="grid grid-cols-3 gap-8">
+        
+        <!-- Left side: Table -->
+        <div class="col-span-2">
+            <div class="bg-white p-6 rounded shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tracked Grants</h2>
+                <table class="table-auto w-full">
+                    <thead>
+                        <tr class="bg-blue-100">
+                            <th class="px-4 py-2 text-left">URL</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for site in websites %}
+                        <tr class="border-t">
+                            <td class="px-4 py-2 break-words">{{ site.url }}</td>
+                            <td class="px-4 py-2 font-bold {% if site.status == 'OPEN' %}text-green-600{% elif site.status == 'CLOSED' %}text-red-600{% else %}text-gray-600{% endif %}">
+                                {{ site.status }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right side: New URL Checker -->
+        <div>
+            <div class="bg-white p-6 rounded shadow-md">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Check New Grant</h2>
+                <form id="url-check-form">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <input id="url-input" type="text" name="url" placeholder="Enter URL..." required class="w-full p-2 border rounded">
+                    </div>
+                    <button type="button" onclick="submitForm()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-700">Check</button>
+                </form>
+
+                <div id="status-result" class="mt-6 p-4 bg-gray-100 rounded text-center"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
