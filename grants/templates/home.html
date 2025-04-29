@@ -54,8 +54,9 @@
         
             const urlCell = document.createElement('td');
             urlCell.classList.add('px-4', 'py-2', 'break-words');
-            urlCell.textContent = url;
-        
+      
+           urlCell.innerHTML = `<a href="${url}" target="_blank" class="text-blue-600 hover:underline">${url}</a>`;
+
             const statusCell = document.createElement('td');
             statusCell.classList.add('px-4', 'py-2', 'font-bold');
             statusCell.classList.add(status === 'open' ? 'text-green-600' : 'text-red-600');
@@ -88,7 +89,10 @@
                     <tbody>
                         {% for site in websites %}
                         <tr class="border-t">
-                            <td class="px-4 py-2 break-words">{{ site.url }}</td>
+                            <td class="px-4 py-2 break-words">
+                                <a href="{{ site.url }}" target="_blank" class="text-blue-600 hover:underline">{{ site.url }}</a>
+                            </td>
+                            
                             <td class="px-4 py-2 font-bold {% if site.status == 'OPEN' %}text-green-600{% elif site.status == 'CLOSED' %}text-red-600{% else %}text-gray-600{% endif %}">
                                 {{ site.status }}
                             </td>
