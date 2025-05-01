@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,18 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         function submitForm() {
+            
             const url = document.getElementById('url-input').value;
             const statusResult = document.getElementById('status-result');
             
-          
             statusResult.innerHTML = "Checking...";
             
-  
             if (!url) {
                 statusResult.innerHTML = "<p class='text-2xl font-bold text-gray-600'>⚠️ Please enter a URL.</p>";
                 return;
             }
-        
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                statusResult.innerHTML = "<p class='text-2xl font-bold text-gray-600'>⚠️ Please enter a valid URL starting with http:// or https://</p>";
+                return;
+            }
+
             fetch('/check-url-ajax/', {
                 method: 'POST',
                 headers: {
@@ -48,19 +52,25 @@
         function updateTable(url, status) {
             const tableBody = document.querySelector('table tbody');
         
-          
             const newRow = document.createElement('tr');
             newRow.classList.add('border-t');
         
             const urlCell = document.createElement('td');
             urlCell.classList.add('px-4', 'py-2', 'break-words');
-      
-           urlCell.innerHTML = `<a href="${url}" target="_blank" class="text-blue-600 hover:underline">${url}</a>`;
+            urlCell.innerHTML = `<a href="${url}" target="_blank" class="text-blue-600 hover:underline">${url}</a>`;
 
             const statusCell = document.createElement('td');
             statusCell.classList.add('px-4', 'py-2', 'font-bold');
-            statusCell.classList.add(status === 'open' ? 'text-green-600' : 'text-red-600');
-            statusCell.textContent = status === 'open' ? '✅ Open' : '❌ Closed';
+            if (status === 'open') {
+                statusCell.classList.add('text-green-600');
+                statusCell.textContent = '✅ Open';
+            } else if (status === 'closed') {
+                statusCell.classList.add('text-red-600');
+                statusCell.textContent = '❌ Closed';
+            } else {
+                statusCell.classList.add('text-gray-600');
+                statusCell.textContent = '⚠️ Error';
+            }
         
             newRow.appendChild(urlCell);
             newRow.appendChild(statusCell);
@@ -93,8 +103,14 @@
                                 <a href="{{ site.url }}" target="_blank" class="text-blue-600 hover:underline">{{ site.url }}</a>
                             </td>
                             
-                            <td class="px-4 py-2 font-bold {% if site.status == 'OPEN' %}text-green-600{% elif site.status == 'CLOSED' %}text-red-600{% else %}text-gray-600{% endif %}">
-                                {{ site.status }}
+                            <td class="px-4 py-2 font-bold {% if site.status == 'open' %}text-green-600{% elif site.status == 'closed' %}text-red-600{% else %}text-gray-600{% endif %}">
+                                {% if site.status == 'open' %}
+                                    ✅ Open
+                                {% elif site.status == 'closed' %}
+                                    ❌ Closed
+                                {% else %}
+                                    ⚠️ Error
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
